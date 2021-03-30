@@ -17,14 +17,14 @@
 (defun on-success (data)
   (message "I received: %S" data))
 
-(defun send-json-request (url success-handler)
+(defun graphql (endpoint query variables success-handler)
   (request
-    url
+    endpoint
     :type "POST"
-    :params '(("Content-Type" . "application/json"))
-    :data '(("query" "{ sessions { id } }"))
+    :headers '(("Content-Type" . "application/json"))
+    :data (json-encode query)
     :parser 'json-read
-    :success (cl-function (lambda (&key response &allow-other-keys) (funcall success-handler response)))))
+    :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))))
 
 (let ((image-path "https://gorgon.nr-assets.net/image/02e53da9-e9d8-4f3b-aa7a-30438111d898?type=line")
       (image nil))
@@ -33,4 +33,8 @@
     (setq image (buffer-substring (1+ url-http-end-of-headers) (point-max))))
   (insert-image (create-image image nil t :height 300)))
 
-(send-json-request "https://stormy.maciejsmolinski.com/graphql" 'on-success)
+(graphql
+ "https://stormy.maciejsmolinski.com/graphql"
+ '(("query" . "{ sessions { id } }"))
+ nil
+ 'on-success)
