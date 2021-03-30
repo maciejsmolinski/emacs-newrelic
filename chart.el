@@ -11,6 +11,12 @@
 
 ;; (call-interactively 'select-account)
 
+(setq accounts '(("First" 1) ("Second" 2)))
+
+(defun select-account-2 (account-name)
+  (interactive (list (completing-read "Select account: " accounts nil t)))
+  (message "Account %s with id %d" account-name (cadr (assoc account-name accounts))))
+
 (use-package request)
 (use-package url)
 
