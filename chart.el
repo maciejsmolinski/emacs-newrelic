@@ -1,15 +1,17 @@
 ;; -*- lexical-binding: t -*-
 ;; (setf lexical-binding t)
 
-(setq api-key "<API-KEY>")
-(setq accounts '(("No accounts available" 0)))
-
-(defun select-account (account-name)
-  (interactive (list (completing-read "Select account: " (seq-map car accounts) nil t)))
-  (message "Account %s with id %d" account-name (cadr (assoc account-name accounts))))
-
 (use-package request)
 (use-package url)
+
+(setq api-key "<API-KEY>")
+(setq accounts '(("No accounts available" 0)))
+(setq active-account-id 0)
+
+(defun select-account (account-name)
+  (interactive (list (completing-read "Select account: " (seq-map 'car accounts) nil t)))
+  (setq active-account-id (cadr (assoc account-name accounts)))
+  (message "Account %s with id %d" account-name active-account-id))
 
 (defun graphql (endpoint query variables success-handler &optional headers)
   (request
