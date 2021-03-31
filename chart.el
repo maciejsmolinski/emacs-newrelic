@@ -23,11 +23,11 @@
 (defun on-success (data)
   (message "I received: %S" data))
 
-(defun graphql (endpoint query variables success-handler)
+(defun graphql (endpoint query variables success-handler &optional headers)
   (request
     endpoint
     :type "POST"
-    :headers '(("Content-Type" . "application/json"))
+    :headers (append '(("Content-Type" . "application/json")) headers)
     :data (json-encode query)
     :parser 'json-read
     :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))))
