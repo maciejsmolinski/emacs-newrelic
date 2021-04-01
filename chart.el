@@ -29,8 +29,8 @@
     (setq accounts account-items)
     (call-interactively 'select-account)))
 
-(defun get-chart ()
-  (let ((image-path "https://gorgon.nr-assets.net/image/02e53da9-e9d8-4f3b-aa7a-30438111d898?type=line")
+(defun insert-image-from-url (url)
+  (let ((image-path url)
         (image nil))
     (with-current-buffer
         (url-retrieve-synchronously image-path)
@@ -44,9 +44,19 @@
   (graphql
    "https://api.newrelic.com/graphql"
    `(
-     :query "query GetChartLink($accountId: Int!, $nrql: Nrql!) { actor { account(id: $accountId) { nrql(query: $nrql) { embeddedChartUrl } } } }"
+     :query "
+       query GetChartLink($accountId: Int!, $nrql: Nrql!) {
+         actor {
+           account(id: $accountId) {
+             nrql(query: $nrql) {
+               staticChartUrl
+             }
+           }
+         }
+       }
+     "
      :variables ,`(:accountId ,active-account-id :nrql ,nrql))
-   (lambda (data) (let ((chartLink (let-alist data .data.actor.account.nrql.embeddedChartUrl))) (kill-new chartLink)))
+   (lambda (data) (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl))) (insert-image-from-url (kill-new chartLink))))
    (list `("Api-Key" . ,api-key))))
 
 (defun open-select-account ()
@@ -59,3 +69,4 @@
 ;; (get-chart)
 ;; (open-select-account)
 (get-chart-link "SELECT * FROM SyntheticCheck")
+(get-chart-link "SELECT count(*) FROM SyntheticCheck TIMESERIES")
