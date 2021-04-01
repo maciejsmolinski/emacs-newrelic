@@ -1,7 +1,14 @@
-;; -*- lexical-binding: t -*-
+;;; newrelic.el --- An unoffical New Relic package -*- lexical-binding: t -*-
 
-(use-package request)
-(use-package url)
+;;; Commentary:
+
+;;; Provides a set of commands for interacting with New Relic
+;;; through the official GraphQL API (api.newrelic.com/graphiql)
+
+;;; Code
+
+(require 'request)
+(require 'url)
 
 (setq api-key "<API-KEY>")
 (setq accounts '(("No accounts available" 0)))
