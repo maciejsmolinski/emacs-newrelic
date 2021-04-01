@@ -13,12 +13,12 @@
   (setq active-account-id (cadr (assoc account-name accounts)))
   (message "Account %s with id %d" account-name active-account-id))
 
-(defun graphql (endpoint query variables success-handler &optional headers)
+(defun graphql (endpoint payload success-handler &optional headers)
   (request
     endpoint
     :type "POST"
     :headers (append '(("Content-Type" . "application/json")) headers)
-    :data (json-encode query)
+    :data (json-encode payload)
     :parser 'json-read
     :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))
     :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
@@ -40,13 +40,22 @@
       (insert "\n")
       (insert-image (create-image image nil t :height 300)))))
 
+(defun get-chart-link (nrql)
+  (graphql
+   "https://api.newrelic.com/graphql"
+   `(
+     :query "query GetChartLink($accountId: Int!, $nrql: Nrql!) { actor { account(id: $accountId) { nrql(query: $nrql) { embeddedChartUrl } } } }"
+     :variables ,`(:accountId ,active-account-id :nrql ,nrql))
+   (lambda (data) (let ((chartLink (let-alist data .data.actor.account.nrql.embeddedChartUrl))) (kill-new chartLink)))
+   (list `("Api-Key" . ,api-key))))
+
 (defun open-select-account ()
   (graphql
    "https://api.newrelic.com/graphql"
    '(("query" . "{ actor { accounts { id name } } }"))
-   nil
    'on-success-handler
    (list `("Api-Key" . ,api-key))))
 
 ;; (get-chart)
 ;; (open-select-account)
+(get-chart-link "SELECT * FROM SyntheticCheck")
