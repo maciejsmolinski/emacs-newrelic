@@ -29,16 +29,24 @@
     (setq accounts account-items)
     (call-interactively 'select-account)))
 
-(graphql
- "https://api.newrelic.com/graphql"
- '(("query" . "{ actor { accounts { id name } } }"))
- nil
- 'on-success-handler
- (list `("Api-Key" . ,api-key)))
+(defun get-chart ()
+  (let ((image-path "https://gorgon.nr-assets.net/image/02e53da9-e9d8-4f3b-aa7a-30438111d898?type=line")
+        (image nil))
+    (with-current-buffer
+        (url-retrieve-synchronously image-path)
+      (setq image (buffer-substring (1+ url-http-end-of-headers) (point-max))))
+    (save-excursion
+      (end-of-line)
+      (insert "\n")
+      (insert-image (create-image image nil t :height 300)))))
 
-(let ((image-path "https://gorgon.nr-assets.net/image/02e53da9-e9d8-4f3b-aa7a-30438111d898?type=line")
-      (image nil))
-  (with-current-buffer
-      (url-retrieve-synchronously image-path)
-    (setq image (buffer-substring (1+ url-http-end-of-headers) (point-max))))
-  (insert-image (create-image image nil t :height 300)))
+(defun open-select-account ()
+  (graphql
+   "https://api.newrelic.com/graphql"
+   '(("query" . "{ actor { accounts { id name } } }"))
+   nil
+   'on-success-handler
+   (list `("Api-Key" . ,api-key))))
+
+;; (get-chart)
+;; (open-select-account)
