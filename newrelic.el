@@ -62,6 +62,27 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
 (setq accounts '(("No accounts available" 0)))
 (setq active-account-id 0)
 
+;;;; Commands
+
+;;;###autoload
+(defun newrelic-nrql-chart (nrql)
+  (interactive "MNRQL: ")
+  (graphql
+   "https://api.newrelic.com/graphql"
+   `(
+     :query ,newrelic-gql-get-chart-link
+     :variables ,`(:accountId ,active-account-id :nrql ,nrql))
+   (lambda (data)
+     (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
+       (insert-image-from-url chartLink)))
+   (list `("Api-Key" . ,api-key))))
+
+;;;; Functions
+
+;;;;; Public
+
+;;;;; Private
+
 (defun graphql (endpoint payload success-handler &optional headers)
   (request
     endpoint
@@ -101,18 +122,8 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
       (insert "\n")
       (insert-image (create-image image nil t :height 300)))))
 
-(defun nrql-chart (nrql)
-  (interactive "MNRQL: ")
-  (graphql
-   "https://api.newrelic.com/graphql"
-   `(
-     :query ,newrelic-gql-get-chart-link
-     :variables ,`(:accountId ,active-account-id :nrql ,nrql))
-   (lambda (data)
-     (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
-       (insert-image-from-url chartLink)))
-   (list `("Api-Key" . ,api-key))))
+;;;; Footer
 
-;; (open-select-account)
-;; (nrql-chart "SELECT * FROM SyntheticCheck")
-;; (nrql-chart "SELECT count(*) FROM SyntheticCheck TIMESERIES")
+(provide 'newrelic)
+
+;;; newrelic.el ends here
