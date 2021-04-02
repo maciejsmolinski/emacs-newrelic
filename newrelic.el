@@ -65,6 +65,11 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
 ;;;; Commands
 
 ;;;###autoload
+(defun newrelic-select-account ()
+  (interactive)
+  (funcall 'select-account))
+
+;;;###autoload
 (defun newrelic-nrql-chart (nrql)
   (interactive "MNRQL: ")
   (graphql
