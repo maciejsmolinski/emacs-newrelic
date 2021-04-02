@@ -68,7 +68,7 @@ query GetAccounts {
 
 ;;;; Variables
 
-(setq api-key "<API-KEY>")
+(setq newrelic-api-key nil)
 (setq accounts '(("No accounts available" 0)))
 (setq active-account-id 0)
 
@@ -99,6 +99,10 @@ query GetAccounts {
      (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
        (insert-image-from-url chartLink)))))
 
+(defun newrelic--get-chart-link-callback (data)
+  (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
+    (insert-image-from-url chartLink)))
+
 (defun newrelic-get-accounts ()
   (newrelic-query
    `(
@@ -111,6 +115,14 @@ query GetAccounts {
     (setq accounts account-items)
     (call-interactively 'select-account-prompt)))
 
+(defun newrelic-ensure-account ()
+  (cond
+         ((not newrelic-api-key) (message "newrelic-api-key not specified. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it."))
+         ((not accounts) (progn (message "Fetching accounts list") (newrelic-get-accounts) (newrelic-ensure-account)))))
+
+
+(newrelic-ensure-account)
+
 ;;;;;; Utils
 
 (defun newrelic-query (payload on-success)
@@ -118,7 +130,7 @@ query GetAccounts {
    "https://api.newrelic.com/graphql"
    payload
    on-success
-   `(:headers (("Api-Key" . ,api-key)))))
+   `(:headers (("Api-Key" . ,newrelic-api-key)))))
 
 ;;;;; Private
 
