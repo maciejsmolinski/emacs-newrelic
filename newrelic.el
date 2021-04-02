@@ -30,8 +30,33 @@
 
 ;;; Code
 
+;;;; Requirements
+
 (require 'request)
 (require 'url)
+
+;;;; Customization
+
+(defgroup newrelic nil
+  "New Relic customization group"
+  :prefix "newrelic-"
+  :group 'newrelic)
+
+;;;; Constants
+
+(defconst newrelic-gql-get-chart-link "
+query GetChartLink($accountId: Int!, $nrql: Nrql!) {
+  actor {
+    account(id: $accountId) {
+      nrql(query: $nrql) {
+        staticChartUrl
+      }
+    }
+  }
+}
+")
+
+;;;; Variables
 
 (setq api-key "<API-KEY>")
 (setq accounts '(("No accounts available" 0)))
@@ -81,17 +106,7 @@
   (graphql
    "https://api.newrelic.com/graphql"
    `(
-     :query "
-       query GetChartLink($accountId: Int!, $nrql: Nrql!) {
-         actor {
-           account(id: $accountId) {
-             nrql(query: $nrql) {
-               staticChartUrl
-             }
-           }
-         }
-       }
-     "
+     :query ,newrelic-gql-get-chart-link
      :variables ,`(:accountId ,active-account-id :nrql ,nrql))
    (lambda (data)
      (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
