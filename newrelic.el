@@ -71,6 +71,8 @@ query GetAccounts {
 (setq newrelic-api-key nil)
 (setq accounts '(("No accounts available" 0)))
 (setq active-account-id 0)
+(setq newrelic-accounts-list nil)
+(setq newrelic-active-account-id nil)
 
 ;;;; Commands
 
@@ -82,7 +84,9 @@ query GetAccounts {
 ;;;###autoload
 (defun newrelic-nrql-chart (nrql)
   (interactive "MNRQL: ")
-  (funcall 'newrelic-get-chart-link))
+  (when (newrelic-ensure-account)
+    (newrelic-open-select-account-prompt)
+    (funcall 'newrelic-get-chart-link)))
 
 ;;;; Functions
 
@@ -95,9 +99,7 @@ query GetAccounts {
    `(
      :query ,newrelic-gql-get-chart-link
      :variables ,`(:accountId ,active-account-id :nrql ,nrql))
-   (lambda (data)
-     (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
-       (insert-image-from-url chartLink)))))
+   'newrelic--get-chart-link-callback))
 
 (defun newrelic--get-chart-link-callback (data)
   (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
@@ -107,34 +109,29 @@ query GetAccounts {
   (newrelic-query
    `(
      :query ,newrelic-gql-get-accounts)
-   'on-success-handler))
+   'newrelic--get-accounts-callback))
 
-(defun on-success-handler (data)
+(defun newrelic--get-accounts-callback (data)
   (let* ((accounts-data (let-alist data .data.actor.accounts))
          (account-items (seq-map (lambda (a) (list (cdadr a) (cdar a))) accounts-data)))
-    (setq accounts account-items)
-    (call-interactively 'select-account-prompt)))
+    (setq newrelic-accounts-list account-items)))
 
 (defun newrelic-ensure-account ()
   (cond
-         ((not newrelic-api-key) (message "newrelic-api-key not specified. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it."))
-         ((not accounts) (progn (message "Fetching accounts list") (newrelic-get-accounts) (newrelic-ensure-account)))))
-
-
-(newrelic-ensure-account)
+   ((not newrelic-api-key) (message "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it."))
+   ((not newrelic-accounts-list) (progn (message "Fetching accounts list") (newrelic-get-accounts)))
+   (newrelic-accounts-list) t))
 
 ;;;;;; Utils
 
 (defun newrelic-query (payload on-success)
-  (newrelic--graphql
+  (newrelic-graphql
    "https://api.newrelic.com/graphql"
    payload
    on-success
    `(:headers (("Api-Key" . ,newrelic-api-key)))))
 
-;;;;; Private
-
-(defun newrelic--graphql (endpoint payload success-handler &optional options)
+(defun newrelic-graphql (endpoint payload success-handler &optional options)
   (request
     endpoint
     :type "POST"
@@ -144,10 +141,13 @@ query GetAccounts {
     :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))
     :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
 
-(defun select-account-prompt (account-name)
+(defun newrelic-open-select-account-prompt (account-name)
   (interactive (list (completing-read "Select account: " (seq-map 'car accounts) nil t)))
   (setq active-account-id (cadr (assoc account-name accounts)))
   (message "Account %s with id %d" account-name active-account-id))
+
+;;;;; Private
+
 
 (defun insert-image-from-url (url)
   (let ((image-path url)
