@@ -31,7 +31,6 @@
 ;;; Code
 
 ;;;; Requirements
-
 (require 'request)
 (require 'url)
 
@@ -56,6 +55,17 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
 }
 ")
 
+(defconst newrelic-gql-get-accounts "
+query GetAccounts {
+  actor {
+    accounts {
+      id
+      name
+    }
+  }
+}
+")
+
 ;;;; Variables
 
 (setq api-key "<API-KEY>")
@@ -67,41 +77,33 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
 ;;;###autoload
 (defun newrelic-select-account ()
   (interactive)
-  (funcall 'select-account))
+  (funcall 'newrelic-get-accounts))
 
 ;;;###autoload
 (defun newrelic-nrql-chart (nrql)
   (interactive "MNRQL: ")
-  (graphql
-   "https://api.newrelic.com/graphql"
-   `(
-     :query ,newrelic-gql-get-chart-link
-     :variables ,`(:accountId ,active-account-id :nrql ,nrql))
-   (lambda (data)
-     (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
-       (insert-image-from-url chartLink)))
-   (list `("Api-Key" . ,api-key))))
+  (funcall 'newrelic-get-chart-link))
 
 ;;;; Functions
 
 ;;;;; Public
 
-;;;;; Private
+;;;;;; API Calls
 
-(defun graphql (endpoint payload success-handler &optional options)
-  (request
-   endpoint
-   :type "POST"
-   :headers (append '(("Content-Type" . "application/json")) (plist-get options :headers))
-   :data (json-encode payload)
-   :parser 'json-read
-   :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))
-   :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
+(defun newrelic-get-chart-link ()
+  (newrelic-query
+   `(
+     :query ,newrelic-gql-get-chart-link
+     :variables ,`(:accountId ,active-account-id :nrql ,nrql))
+   (lambda (data)
+     (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
+       (insert-image-from-url chartLink)))))
 
-(defun select-account-prompt (account-name)
-  (interactive (list (completing-read "Select account: " (seq-map 'car accounts) nil t)))
-  (setq active-account-id (cadr (assoc account-name accounts)))
-  (message "Account %s with id %d" account-name active-account-id))
+(defun newrelic-get-accounts ()
+  (newrelic-query
+   `(
+     :query ,newrelic-gql-get-accounts)
+   'on-success-handler))
 
 (defun on-success-handler (data)
   (let* ((accounts-data (let-alist data .data.actor.accounts))
@@ -109,12 +111,31 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
     (setq accounts account-items)
     (call-interactively 'select-account-prompt)))
 
-(defun select-account ()
-  (graphql
+;;;;;; Utils
+
+(defun newrelic-query (payload on-success)
+  (newrelic--graphql
    "https://api.newrelic.com/graphql"
-   '(("query" . "{ actor { accounts { id name } } }"))
-   'on-success-handler
-   `(:headers '(("Api-Key" . ,api-key)))))
+   payload
+   on-success
+   `(:headers (("Api-Key" . ,api-key)))))
+
+;;;;; Private
+
+(defun newrelic--graphql (endpoint payload success-handler &optional options)
+  (request
+    endpoint
+    :type "POST"
+    :headers (append '(("Content-Type" . "application/json")) (plist-get options :headers))
+    :data (json-encode payload)
+    :parser 'json-read
+    :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))
+    :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
+
+(defun select-account-prompt (account-name)
+  (interactive (list (completing-read "Select account: " (seq-map 'car accounts) nil t)))
+  (setq active-account-id (cadr (assoc account-name accounts)))
+  (message "Account %s with id %d" account-name active-account-id))
 
 (defun insert-image-from-url (url)
   (let ((image-path url)
