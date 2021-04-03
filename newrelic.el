@@ -77,11 +77,10 @@ query GetAccounts {
 ;;;; Commands
 
 ;;;###autoload
-(defun newrelic-nrql-chart (nrql)
-  (interactive "MNRQL: ")
+(defun newrelic-refresh-accounts-list ()
+  (interactive)
   (when (newrelic--ensure-accounts-loaded)
-    (call-interactively 'newrelic-set-active-account)
-    (funcall 'newrelic-get-chart-link nrql)))
+    (message "Accounts list refreshed")))
 
 ;;;###autoload
 (defun newrelic-set-active-account (account-name)
@@ -91,10 +90,30 @@ query GetAccounts {
     (message "Selected account %s with id %d" account-name newrelic-active-account-id)))
 
 ;;;###autoload
-(defun newrelic-refresh-accounts-list ()
-  (interactive)
+(defun newrelic-nrql-chart (nrql)
+  (interactive "MNRQL: ")
   (when (newrelic--ensure-accounts-loaded)
-    (message "Accounts list refreshed")))
+    (call-interactively 'newrelic-set-active-account)
+    (funcall 'newrelic-get-chart-link nrql)))
+
+;;;###autoload
+(defun newrelic-nrql-eval-line (pos)
+  (interactive "d")
+  (when (newrelic--ensure-accounts-loaded)
+    (let ((nrql nil))
+      (save-excursion
+        (goto-char pos)
+        (setq nrql (buffer-substring (line-beginning-position) (line-end-position))))
+      (call-interactively 'newrelic-set-active-account)
+      (funcall 'newrelic-get-chart-link nrql))))
+
+;;;###autoload
+(defun newrelic-nrql-eval-region (pos-min pos-max)
+  (interactive "r")
+  (when (newrelic--ensure-accounts-loaded)
+    (let ((nrql (buffer-substring pos-min pos-max)))
+      (call-interactively 'newrelic-set-active-account)
+      (funcall 'newrelic-get-chart-link nrql))))
 
 ;;;; Functions
 
