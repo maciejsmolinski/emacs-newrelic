@@ -49,6 +49,7 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
   actor {
     account(id: $accountId) {
       nrql(query: $nrql) {
+        nrql
         staticChartUrl
       }
     }
@@ -76,16 +77,24 @@ query GetAccounts {
 ;;;; Commands
 
 ;;;###autoload
-(defun newrelic-select-account ()
-  (interactive)
-  (funcall 'newrelic-get-accounts))
-
-;;;###autoload
 (defun newrelic-nrql-chart (nrql)
   (interactive "MNRQL: ")
-  (when (newrelic-ensure-account)
-    (newrelic-open-select-account-prompt)
+  (when (newrelic--ensure-accounts-loaded)
+    (call-interactively 'newrelic-set-active-account)
     (funcall 'newrelic-get-chart-link nrql)))
+
+;;;###autoload
+(defun newrelic-set-active-account (account-name)
+  (interactive (list (completing-read "Select account: " (seq-map 'car newrelic-accounts-list) nil t)))
+  (when (newrelic--ensure-accounts-loaded)
+    (setq newrelic-active-account-id (cadr (assoc account-name newrelic-accounts-list)))
+    (message "Selected account %s with id %d" account-name newrelic-active-account-id)))
+
+;;;###autoload
+(defun newrelic-refresh-accounts-list ()
+    (interactive)
+  (when (newrelic--ensure-accounts-loaded)
+    (message "Accounts list refreshed")))
 
 ;;;; Functions
 
@@ -96,14 +105,20 @@ query GetAccounts {
 (defun newrelic-get-chart-link (nrql)
   (newrelic-query
    `(:query ,newrelic-gql-get-chart-link
-     :variables ,`(:accountId ,active-account-id :nrql ,nrql))
+     :variables ,`(:accountId ,newrelic-active-account-id :nrql ,nrql))
    'newrelic--get-chart-link-callback))
 
 (defun newrelic--get-chart-link-callback (data)
-  (let ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl)))
-    (insert-image-from-url chartLink)))
+  (let* ((chartLink (let-alist data .data.actor.account.nrql.staticChartUrl))
+         (nrql (let-alist data .data.actor.account.nrql.nrql))
+         (buffer (get-buffer-create (concat "* NRQL @ " (number-to-string newrelic-active-account-id) " *"))))
+    (pop-to-buffer buffer)
+    (with-current-buffer buffer
+      (save-excursion
+        (insert nrql "\n")
+        (insert-image-from-url chartLink)))))
 
-(defun newrelic-get-accounts ()
+(defun newrelic-load-accounts ()
   (newrelic-query
    `(:query ,newrelic-gql-get-accounts)
    'newrelic--get-accounts-callback))
@@ -112,12 +127,6 @@ query GetAccounts {
   (let* ((accounts-data (let-alist data .data.actor.accounts))
          (account-items (seq-map (lambda (a) (list (cdadr a) (cdar a))) accounts-data)))
     (setq newrelic-accounts-list account-items)))
-
-(defun newrelic-ensure-account ()
-  (cond
-   ((not newrelic-api-key) (progn (message "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it.") nil))
-   ((not newrelic-accounts-list) (progn (message "Fetching accounts list") (newrelic-get-accounts)))
-   (newrelic-accounts-list t)))
 
 ;;;;;; Utils
 
@@ -138,14 +147,6 @@ query GetAccounts {
     :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))
     :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
 
-(defun newrelic-open-select-account-prompt (account-name)
-  (interactive (list (completing-read "Select account: " (seq-map 'car newrelic-accounts-list) nil t)))
-  (setq newrelic-active-account-id (cadr (assoc account-name newrelic-accounts-list)))
-  (message "Account %s with id %d" account-name active-account-id))
-
-;;;;; Private
-
-
 (defun insert-image-from-url (url)
   (let ((image-path url)
         (image nil))
@@ -156,6 +157,14 @@ query GetAccounts {
       (end-of-line)
       (insert "\n")
       (insert-image (create-image image nil t :height 300)))))
+
+;;;;; Private
+
+(defun newrelic--ensure-accounts-loaded ()
+  (cond
+   ((not newrelic-api-key) (progn (message "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it.") nil))
+   ((not newrelic-accounts-list) (progn (message "Fetching accounts list") (newrelic-load-accounts)))
+   (newrelic-accounts-list t)))
 
 ;;;; Footer
 
