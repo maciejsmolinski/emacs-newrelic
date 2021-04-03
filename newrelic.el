@@ -134,9 +134,10 @@ query GetAccounts {
     (pop-to-buffer buffer)
     (with-current-buffer buffer
       (goto-char (point-min))
-      (insert "\n" nrql "\n\n")
-      (insert-image-from-url chartLink)
-      (insert "\n"))))
+      (save-excursion
+        (insert "\n" nrql "\n\n")
+        (insert-image-from-url chartLink)
+        (insert "\n")))))
 
 (defun newrelic-load-accounts ()
   (newrelic-query
