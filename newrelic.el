@@ -86,7 +86,7 @@ query GetAccounts {
   (interactive "MNRQL: ")
   (when (newrelic-ensure-account)
     (newrelic-open-select-account-prompt)
-    (funcall 'newrelic-get-chart-link)))
+    (funcall 'newrelic-get-chart-link nrql)))
 
 ;;;; Functions
 
@@ -94,7 +94,7 @@ query GetAccounts {
 
 ;;;;;; API Calls
 
-(defun newrelic-get-chart-link ()
+(defun newrelic-get-chart-link (nrql)
   (newrelic-query
    `(
      :query ,newrelic-gql-get-chart-link
@@ -142,8 +142,8 @@ query GetAccounts {
     :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
 
 (defun newrelic-open-select-account-prompt (account-name)
-  (interactive (list (completing-read "Select account: " (seq-map 'car accounts) nil t)))
-  (setq active-account-id (cadr (assoc account-name accounts)))
+  (interactive (list (completing-read "Select account: " (seq-map 'car newrelic-accounts-list) nil t)))
+  (setq newrelic-active-account-id (cadr (assoc account-name newrelic-accounts-list)))
   (message "Account %s with id %d" account-name active-account-id))
 
 ;;;;; Private
