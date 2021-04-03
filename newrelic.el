@@ -90,7 +90,7 @@ query GetAccounts {
     (message "Selected account %s with id %d" account-name newrelic-active-account-id)))
 
 ;;;###autoload
-(defun newrelic-nrql-chart (nrql)
+(defun newrelic-nrql-eval (nrql)
   (interactive "MNRQL: ")
   (when (newrelic--ensure-accounts-loaded)
     (call-interactively 'newrelic-set-active-account)
