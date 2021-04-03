@@ -28,9 +28,10 @@
 ;;; Provides a set of commands for interacting with New Relic
 ;;; through the official GraphQL API (api.newrelic.com/graphiql)
 
-;;; Code
+;;; Code:
 
 ;;;; Requirements
+
 (require 'request)
 (require 'url)
 
@@ -69,8 +70,6 @@ query GetAccounts {
 ;;;; Variables
 
 (setq newrelic-api-key nil)
-(setq accounts '(("No accounts available" 0)))
-(setq active-account-id 0)
 (setq newrelic-accounts-list nil)
 (setq newrelic-active-account-id nil)
 
@@ -96,8 +95,7 @@ query GetAccounts {
 
 (defun newrelic-get-chart-link (nrql)
   (newrelic-query
-   `(
-     :query ,newrelic-gql-get-chart-link
+   `(:query ,newrelic-gql-get-chart-link
      :variables ,`(:accountId ,active-account-id :nrql ,nrql))
    'newrelic--get-chart-link-callback))
 
@@ -107,8 +105,7 @@ query GetAccounts {
 
 (defun newrelic-get-accounts ()
   (newrelic-query
-   `(
-     :query ,newrelic-gql-get-accounts)
+   `(:query ,newrelic-gql-get-accounts)
    'newrelic--get-accounts-callback))
 
 (defun newrelic--get-accounts-callback (data)
@@ -118,9 +115,9 @@ query GetAccounts {
 
 (defun newrelic-ensure-account ()
   (cond
-   ((not newrelic-api-key) (message "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it."))
+   ((not newrelic-api-key) (progn (message "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it.") nil))
    ((not newrelic-accounts-list) (progn (message "Fetching accounts list") (newrelic-get-accounts)))
-   (newrelic-accounts-list) t))
+   (newrelic-accounts-list t)))
 
 ;;;;;; Utils
 
