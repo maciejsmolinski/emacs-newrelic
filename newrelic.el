@@ -92,7 +92,7 @@ query GetAccounts {
 
 ;;;###autoload
 (defun newrelic-refresh-accounts-list ()
-    (interactive)
+  (interactive)
   (when (newrelic--ensure-accounts-loaded)
     (message "Accounts list refreshed")))
 
@@ -114,9 +114,10 @@ query GetAccounts {
          (buffer (get-buffer-create (concat "* NRQL @ " (number-to-string newrelic-active-account-id) " *"))))
     (pop-to-buffer buffer)
     (with-current-buffer buffer
-      (save-excursion
-        (insert nrql "\n")
-        (insert-image-from-url chartLink)))))
+      (goto-char (point-min))
+      (insert "\n" nrql "\n\n")
+      (insert-image-from-url chartLink)
+      (insert "\n"))))
 
 (defun newrelic-load-accounts ()
   (newrelic-query
@@ -153,10 +154,7 @@ query GetAccounts {
     (with-current-buffer
         (url-retrieve-synchronously image-path)
       (setq image (buffer-substring (1+ url-http-end-of-headers) (point-max))))
-    (save-excursion
-      (end-of-line)
-      (insert "\n")
-      (insert-image (create-image image nil t :height 300)))))
+    (insert-image (create-image image nil t :height 300))))
 
 ;;;;; Private
 
