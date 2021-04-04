@@ -42,10 +42,14 @@
   :prefix "newrelic-"
   :group 'newrelic)
 
-(defvar newrelic-api-key nil
-  "New Relic Query API Key.")
+(defcustom newrelic-api-key nil
+  "New Relic Query API Key."
+  :type 'string
+  :group 'newrelic)
+
 (defvar newrelic-accounts-list nil
   "A list of New Relic account name and account id pairs.")
+
 (defvar newrelic-active-account-id nil
   "An account being currently operated on.")
 
