@@ -171,8 +171,7 @@ query GetAccounts {
 (defun insert-image-from-url (url)
   (let ((image-path url)
         (image nil))
-    (with-current-buffer
-        (url-retrieve-synchronously image-path)
+    (with-current-buffer (url-retrieve-synchronously image-path)
       (setq image (buffer-substring (1+ url-http-end-of-headers) (point-max))))
     (insert-image (create-image image nil t :height 300))))
 
