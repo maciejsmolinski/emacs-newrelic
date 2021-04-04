@@ -42,6 +42,13 @@
   :prefix "newrelic-"
   :group 'newrelic)
 
+(defvar newrelic-api-key nil
+  "New Relic Query API Key.")
+(defvar newrelic-accounts-list nil
+  "A list of New Relic account name and account id pairs.")
+(defvar newrelic-active-account-id nil
+  "An account being currently operated on.")
+
 ;;;; Constants
 
 (defconst newrelic-gql-get-chart-link "
@@ -55,7 +62,7 @@ query GetChartLink($accountId: Int!, $nrql: Nrql!) {
     }
   }
 }
-")
+" "A GraphQL Query used by the client to get a link to the chart image for a given query.")
 
 (defconst newrelic-gql-get-accounts "
 query GetAccounts {
@@ -66,13 +73,9 @@ query GetAccounts {
     }
   }
 }
-")
+" "A GraphQL Query used by the client to get a list of account name and id pairs.")
 
 ;;;; Variables
-
-(setq newrelic-api-key nil)
-(setq newrelic-accounts-list nil)
-(setq newrelic-active-account-id nil)
 
 ;;;; Commands
 
