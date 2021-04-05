@@ -79,6 +79,25 @@ query GetAccounts {
 }
 " "A GraphQL Query used by the client to get a list of account name and id pairs.")
 
+(defconst newrelic-get-dashboards "
+query GetDashboards {
+  actor {
+    entitySearch(queryBuilder: {type: DASHBOARD}) {
+      results {
+        entities {
+          ... on DashboardEntityOutline {
+            name
+            accountId
+            guid
+            dashboardParentGuid
+          }
+        }
+      }
+    }
+  }
+}
+" "A GraphQL Query used by the client to get a list of dashboards including their name, guid and other details.")
+
 ;;;; Variables
 
 ;;;; Commands
