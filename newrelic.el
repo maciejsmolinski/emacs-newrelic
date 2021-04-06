@@ -193,7 +193,8 @@ query GetDashboards {
     :data (json-encode payload)
     :parser 'json-read
     :success (cl-function (lambda (&key data &allow-other-keys) (funcall success-handler data)))
-    :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))))
+    :error (cl-function (lambda (&key error-thrown data &allow-other-keys) (message (format "%s %s" error-thrown data))))
+    :sync t))
 
 (defun insert-image-from-url (url)
   (let ((image-path url)
