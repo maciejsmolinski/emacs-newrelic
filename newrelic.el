@@ -109,11 +109,12 @@ query GetDashboards {
     (message "Accounts list refreshed")))
 
 ;;;###autoload
-(defun newrelic-set-active-account (account-name)
-  (interactive (list (completing-read "Select account: " (seq-map 'car newrelic-accounts-list) nil t)))
+(defun newrelic-set-active-account ()
+  (interactive)
   (when (newrelic--ensure-accounts-loaded)
-    (setq newrelic-active-account-id (cadr (assoc account-name newrelic-accounts-list)))
-    (message "Selected account %s with id %d" account-name newrelic-active-account-id)))
+    (let ((account-name (completing-read "Select account: " (seq-map 'car newrelic-accounts-list) nil t)))
+      (setq newrelic-active-account-id (cadr (assoc account-name newrelic-accounts-list)))
+      (message "Selected account %s with id %d" account-name newrelic-active-account-id))))
 
 ;;;###autoload
 (defun newrelic-nrql-eval (nrql)
