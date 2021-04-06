@@ -53,6 +53,9 @@
 (defvar newrelic-active-account-id nil
   "An account being currently operated on.")
 
+(defvar newrelic-dashboards-list nil
+  "A list of New Relic dashboards.")
+
 ;;;; Constants
 
 (defconst newrelic-gql-get-chart-link "
@@ -79,7 +82,7 @@ query GetAccounts {
 }
 " "A GraphQL Query used by the client to get a list of account name and id pairs.")
 
-(defconst newrelic-get-dashboards "
+(defconst newrelic-gql-get-dashboards "
 query GetDashboards {
   actor {
     entitySearch(queryBuilder: {type: DASHBOARD}) {
@@ -136,6 +139,11 @@ query GetDashboards {
       (call-interactively 'newrelic-set-active-account)
       (funcall 'newrelic-get-chart-link nrql))))
 
+(defun newrelic-dashboards ()
+  (interactive)
+  (when (newrelic--ensure-dashboards-loaded)
+    (message "ok")))
+
 ;;;; Functions
 
 ;;;;; Public
@@ -169,6 +177,15 @@ query GetDashboards {
   (let* ((accounts-data (let-alist data .data.actor.accounts))
          (account-items (seq-map (lambda (a) (list (cdadr a) (cdar a))) accounts-data)))
     (setq newrelic-accounts-list account-items)))
+
+(defun newrelic-load-dashboards ()
+  (newrelic-query
+   `(:query ,newrelic-gql-get-dashboards)
+   'newrelic--load-dashboards-callback))
+
+(defun newrelic--load-dashboards-callback (data)
+  (let ((dashboards-data (let-alist data .data.actor.entitySearch.results.entities)))
+    (setq newrelic-dashboards-list dashboards-data)))
 
 ;;;;;; Utils
 
@@ -204,6 +221,12 @@ query GetDashboards {
    ((not newrelic-api-key) (error "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it"))
    ((not newrelic-accounts-list) (progn (message "Fetching accounts list") (newrelic-load-accounts)))
    (newrelic-accounts-list t)))
+
+(defun newrelic--ensure-dashboards-loaded ()
+  (cond
+   ((not newrelic-api-key) (error "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it"))
+   ((not newrelic-dashboards-list) (progn (message "Fetching dashboards list") (newrelic-load-dashboards)))
+   (newrelic-dashboards-list t)))
 
 ;;;; Footer
 
