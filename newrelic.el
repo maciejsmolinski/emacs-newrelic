@@ -103,12 +103,6 @@ query GetDashboards {
 ;;;; Commands
 
 ;;;###autoload
-(defun newrelic-refresh-accounts-list ()
-  (interactive)
-  (when (newrelic--ensure-accounts-loaded)
-    (message "Accounts list refreshed")))
-
-;;;###autoload
 (defun newrelic-set-active-account ()
   (interactive)
   (when (newrelic--ensure-accounts-loaded)
