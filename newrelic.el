@@ -205,7 +205,7 @@ query GetDashboards {
 
 (defun newrelic--ensure-accounts-loaded ()
   (cond
-   ((not newrelic-api-key) (progn (message "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it.") nil))
+   ((not newrelic-api-key) (error "Error. `newrelic-api-key` is missing. Set one with (setq newrelic-api-key \"<your-api-key>\") to fix it"))
    ((not newrelic-accounts-list) (progn (message "Fetching accounts list") (newrelic-load-accounts)))
    (newrelic-accounts-list t)))
 
