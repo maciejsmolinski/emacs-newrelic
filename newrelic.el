@@ -142,7 +142,10 @@ query GetDashboards {
 (defun newrelic-dashboards ()
   (interactive)
   (when (newrelic--ensure-dashboards-loaded)
-    (message "ok")))
+    (let* ((dashboards (mapcar (lambda (item) (concat (let-alist item .name) " (" (let-alist item .guid) ")")) newrelic-dashboards-list))
+           (dashboard (completing-read "Select dashboard: " dashboards nil t)))
+     (message "Selected dashboard %s with id %s" dashboard ""))))
+
 
 ;;;; Functions
 
