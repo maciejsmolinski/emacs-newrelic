@@ -34,6 +34,7 @@
 
 (require 'request)
 (require 'url)
+(require 'browse-url)
 
 ;;;; Customization
 
@@ -142,10 +143,12 @@ query GetDashboards {
 (defun newrelic-dashboards ()
   (interactive)
   (when (newrelic--ensure-dashboards-loaded)
-    (let* ((dashboards (mapcar (lambda (item) (concat (let-alist item .name) " (" (let-alist item .guid) ")")) newrelic-dashboards-list))
-           (dashboard (completing-read "Select dashboard: " dashboards nil t)))
-     (message "Selected dashboard %s with id %s" dashboard ""))))
-
+    (let* ((dashboards (mapcar (lambda (item) (concat (let-alist item .name) " @@ " (let-alist item .guid))) newrelic-dashboards-list))
+           (dashboard (completing-read "Select dashboard: " dashboards nil t))
+           (selected-dashboard-name (car (split-string dashboard " @@ ")))
+           (selected-dashboard-id (cadr (split-string dashboard " @@ "))))
+      (message "Opening dashboard %s with id %s" selected-dashboard-name selected-dashboard-id)
+      (browse-url (concat "https://one.newrelic.com/redirect/entity/" selected-dashboard-id)))))
 
 ;;;; Functions
 
