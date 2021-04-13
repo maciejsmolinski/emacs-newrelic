@@ -1,12 +1,12 @@
-;;; newrelic.el --- An unoffical New Relic package -*- lexical-binding: t -*-
+;;; newrelic.el --- An unofficial New Relic package -*- lexical-binding: t -*-
 
 ;;; Copyright (C) 2021 Maciej Smolinski
 
 ;; Author: Maciej Smolinski <contact AT maciejsmolinski.com>
 ;; URL: https://github.com/maciejsmolinski/emacs-newrelic
 ;; Version: 0.0.1-pre
-;; Package-Requires: ((emacs "27.1"))
-;; Keywords: newrelic monitoring observability
+;; Package-Requires: ((emacs "24.4") (request "0.3.3"))
+;; Keywords: tools newrelic monitoring observability
 
 ;; This file is not part of GNU Emacs.
 
