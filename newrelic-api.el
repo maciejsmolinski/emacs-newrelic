@@ -76,7 +76,7 @@ query GetDashboards {
 ;;;; Functions
 
 (defun newrelic-get-chart-link (nrql)
-  (newrelic-query
+  (newrelic--query
    `(:query ,newrelic-gql-get-chart-link
      :variables ,`(:accountId ,newrelic-active-account-id :nrql ,nrql))
    'newrelic--get-chart-link-callback))
@@ -94,7 +94,7 @@ query GetDashboards {
         (insert "\n")))))
 
 (defun newrelic-load-accounts ()
-  (newrelic-query
+  (newrelic--query
    `(:query ,newrelic-gql-get-accounts)
    'newrelic--get-accounts-callback))
 
@@ -104,7 +104,7 @@ query GetDashboards {
     (setq newrelic-accounts-list account-items)))
 
 (defun newrelic-load-dashboards ()
-  (newrelic-query
+  (newrelic--query
    `(:query ,newrelic-gql-get-dashboards)
    'newrelic--load-dashboards-callback))
 
@@ -112,15 +112,14 @@ query GetDashboards {
   (let ((dashboards-data (let-alist data .data.actor.entitySearch.results.entities)))
     (setq newrelic-dashboards-list dashboards-data)))
 
-
-(defun newrelic-query (payload on-success)
-  (newrelic-graphql
+(defun newrelic--query (payload on-success)
+  (newrelic--graphql
    "https://api.newrelic.com/graphql"
    payload
    on-success
    `(:headers (("Api-Key" . ,newrelic-api-key)))))
 
-(defun newrelic-graphql (endpoint payload success-handler &optional options)
+(defun newrelic--graphql (endpoint payload success-handler &optional options)
   (request
     endpoint
     :type "POST"
