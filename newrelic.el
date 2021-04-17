@@ -1,4 +1,4 @@
-;;; newrelic.el --- An unofficial New Relic package -*- lexical-binding: t -*-
+;;; newrelic.el --- An unofficial New Relic client package -*- lexical-binding: t -*-
 
 ;;; Copyright (C) 2021 Maciej Smolinski
 
@@ -25,8 +25,9 @@
 
 ;;; Commentary:
 
-;;; Provides a set of commands for interacting with New Relic
-;;; through the official GraphQL API (api.newrelic.com/graphiql)
+;; An unofficial New Relic client package.
+;; Provides a set of commands for interacting with New Relic
+;; through the official GraphQL API (api.newrelic.com/graphiql)
 
 ;;; Code:
 
